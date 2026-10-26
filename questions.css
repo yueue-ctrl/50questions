@@ -1,0 +1,263 @@
+:root {
+    --paper: #ffc229;
+    --ink: #f500a5;
+    --line: #f500a5;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    background: var(--paper);
+}
+
+body {
+    margin: 0;
+    color: var(--ink);
+    background: var(--paper);
+    font-family: Baskerville, 'Iowan Old Style', 'Times New Roman', 'Songti SC', serif;
+    font-weight: 400;
+    overflow-x: hidden;
+}
+
+.questions-toolbar {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    left: 18px;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+.questions-toolbar--standalone {
+    justify-content: flex-end;
+}
+
+.questions-back,
+.questions-motion {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: inherit;
+    font: inherit;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+}
+
+.questions-back,
+.questions-motion {
+    padding: 7px 10px 6px;
+    font-size: 0.75rem;
+    pointer-events: auto;
+}
+
+.questions-motion {
+    cursor: pointer;
+}
+
+.questions-back:hover,
+.questions-back:focus-visible,
+.questions-motion:hover,
+.questions-motion:focus-visible,
+.questions-motion[aria-pressed="true"] {
+    color: var(--paper);
+    background: var(--ink);
+    outline: none;
+}
+
+.questions-stage {
+    position: relative;
+    width: 100%;
+    height: 180vh;
+    min-height: 1100px;
+    overflow: hidden;
+    touch-action: pan-y;
+}
+
+.question-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    width: 164px;
+    height: 205px;
+    padding: 38px 20px 30px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 50% 50% 46% 46% / 61% 61% 39% 39%;
+    background: #fff;
+    box-shadow: none;
+    font-size: 0.9rem;
+    line-height: 1.16;
+    letter-spacing: 0.012em;
+    text-align: center;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    will-change: transform;
+    transition: scale 120ms ease-out;
+}
+
+.question-card::before {
+    display: none;
+}
+
+.question-number,
+.question-text {
+    position: relative;
+    z-index: 4;
+}
+
+.question-number {
+    display: block;
+    margin-bottom: 0.42em;
+    font-size: 1.45em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.question-card.crack-1 .question-number,
+.question-card.crack-2 .question-number,
+.question-card.crack-3 .question-number {
+    visibility: hidden;
+}
+
+.question-text {
+    visibility: hidden;
+}
+
+.question-card.has-medium-question .question-text {
+    font-size: 0.9em;
+}
+
+.question-card.has-long-question .question-text {
+    font-size: 0.8em;
+    line-height: 1.12;
+}
+
+.egg-cracks {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    fill: none;
+    stroke: var(--line);
+    stroke-linecap: round;
+    stroke-linejoin: miter;
+    stroke-width: 0.62;
+    pointer-events: none;
+}
+
+.crack-line {
+    visibility: hidden;
+    stroke-dasharray: 260;
+    stroke-dashoffset: 260;
+    transition: stroke-dashoffset 220ms ease-out;
+}
+
+.question-card.crack-1 .crack-line-one,
+.question-card.crack-2 .crack-line-one,
+.question-card.crack-2 .crack-line-two,
+.question-card.crack-3 .crack-line {
+    visibility: visible;
+    stroke-dashoffset: 0;
+}
+
+.egg-fragment {
+    position: absolute;
+    top: 48%;
+    left: 48%;
+    z-index: 8;
+    width: 17px;
+    height: 22px;
+    border: 1px solid var(--line);
+    background: #fff;
+    clip-path: polygon(8% 4%, 100% 20%, 70% 100%, 0 73%);
+    visibility: visible;
+    pointer-events: none;
+    animation: fragment-fly 620ms cubic-bezier(0.2, 0.7, 0.3, 1) var(--fragment-delay) forwards;
+}
+
+.question-card.is-breaking {
+    z-index: 910;
+}
+
+.question-card.is-broken {
+    z-index: 700;
+    overflow: visible;
+    border-color: var(--line);
+    background: transparent;
+    box-shadow: none;
+}
+
+.question-card.is-broken::before,
+.question-card.is-broken .egg-cracks {
+    visibility: hidden;
+}
+
+.question-card.is-broken .question-text {
+    visibility: visible;
+}
+
+@keyframes fragment-fly {
+    0% { visibility: visible; translate: 0 0; rotate: 0deg; scale: 1; }
+    99% { visibility: visible; }
+    100% { visibility: hidden; translate: var(--fragment-x) var(--fragment-y); rotate: var(--fragment-rotation); scale: 0.72; }
+}
+
+.question-card.is-dragging {
+    z-index: 900;
+    scale: 1.045;
+    box-shadow: none;
+    cursor: grabbing;
+}
+
+.question-card:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+}
+
+@media (min-width: 1500px) {
+    .question-card {
+        width: 178px;
+        height: 220px;
+        padding-inline: 22px;
+        font-size: 0.96rem;
+    }
+}
+
+@media (max-width: 700px) {
+    .questions-toolbar {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+
+    .questions-back,
+    .questions-motion {
+        padding-inline: 7px;
+        font-size: 0.64rem;
+    }
+
+    .question-card {
+        width: 140px;
+        height: 178px;
+        padding: 30px 15px 25px;
+        font-size: 0.78rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .question-card {
+        will-change: auto;
+    }
+}
