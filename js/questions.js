@@ -53,6 +53,8 @@ const QUESTIONS = [
 
 const stage = document.getElementById('questions-stage');
 const variationToggle = document.getElementById('variation-toggle');
+const resetStackButton = document.getElementById('reset-stack');
+const eggLoader = document.getElementById('egg-loader');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const EGG_PALETTE = [
     '#e6007e',
@@ -75,11 +77,22 @@ let pointerStart = { x: 0, y: 0 };
 let dragMoved = false;
 let variedMode = false;
 let scrollGuardFrame = 0;
+let loaderTimer = 0;
 
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
+}
+
+function showEggLoader() {
+    window.clearTimeout(loaderTimer);
+    eggLoader.classList.remove('is-hidden');
+    eggLoader.setAttribute('aria-hidden', 'false');
+    loaderTimer = window.setTimeout(() => {
+        eggLoader.classList.add('is-hidden');
+        eggLoader.setAttribute('aria-hidden', 'true');
+    }, reducedMotion ? 650 : 1200);
 }
 
 function breakEgg(body) {
@@ -169,9 +182,16 @@ function applyEggAppearance() {
 }
 
 variationToggle.addEventListener('click', () => {
+    showEggLoader();
     variedMode = !variedMode;
     applyEggAppearance();
     buildWall();
+});
+
+resetStackButton.addEventListener('click', () => {
+    showEggLoader();
+    buildWall();
+    requestAnimationFrame(() => window.scrollTo(0, document.documentElement.scrollHeight));
 });
 
 function createBodies() {
@@ -493,6 +513,7 @@ refreshBounds();
 createBodies();
 applyEggAppearance();
 buildWall();
+showEggLoader();
 requestAnimationFrame(() => {
     requestAnimationFrame(() => window.scrollTo(0, document.documentElement.scrollHeight));
 });

@@ -5,15 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Questions</title>
     <meta name="description" content="Fifty interactive questions inside a physical stack of eggs.">
-    <link rel="stylesheet" href="questions.css?v=numbered-questions-12">
+    <link rel="stylesheet" href="questions.css?v=egg-loader-13">
 </head>
 <body>
     <header class="questions-toolbar questions-toolbar--standalone">
+        <button class="questions-reset" id="reset-stack" type="button" aria-label="Reset and restack all eggs">
+            <span class="mini-egg" aria-hidden="true"></span>
+            <span class="mini-egg mini-egg--tilted" aria-hidden="true"></span>
+            <span class="mini-egg" aria-hidden="true"></span>
+        </button>
         <button class="questions-motion" id="variation-toggle" type="button" aria-pressed="false" aria-label="Switch to eggs with different sizes and type colors">DIFFERENT EGGS</button>
     </header>
 
+    <div class="egg-loader" id="egg-loader" role="status" aria-label="Loading eggs" aria-hidden="false">
+        <div class="egg-loader__panel" aria-hidden="true">
+            <span class="egg-loader__egg"></span>
+            <span class="egg-loader__egg egg-loader__egg--tilted"></span>
+            <span class="egg-loader__egg"></span>
+        </div>
+    </div>
+
     <main class="questions-stage" id="questions-stage" aria-label="Interactive field of questions"></main>
 
-    <script src="js/questions.js?v=original-physics-11"></script>
+    <script src="js/questions.js?v=egg-loader-13"></script>
 </body>
 </html>
