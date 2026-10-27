@@ -358,12 +358,6 @@ function endDrag() {
         return;
     }
 
-    if (releasedBody.broken) {
-        releasedBody.vx = 0;
-        releasedBody.vy = 0;
-        releasedBody.angularVelocity = 0;
-    }
-
     bodies.forEach((body) => {
         if (body === releasedBody || body.y >= releasedBody.y) return;
         const direction = body.index % 2 ? 1 : -1;
@@ -373,8 +367,6 @@ function endDrag() {
 }
 
 function resolvePair(a, b) {
-    // Opened questions are placeable rigid colliders. They stay where the
-    // visitor leaves them and push other eggs aside without drifting away.
     if (a.dragging && b.dragging) return;
     const dx = (b.x + b.w / 2) - (a.x + a.w / 2);
     const dy = (b.y + b.h / 2) - (a.y + a.h / 2);
@@ -395,8 +387,8 @@ function resolvePair(a, b) {
     const bOnFloor = b.y + b.h >= stageHeight - 0.75;
     const aIsVerticalSupport = aOnFloor && normalY < -0.35;
     const bIsVerticalSupport = bOnFloor && normalY > 0.35;
-    let inverseA = a.dragging || a.broken || aIsVerticalSupport ? 0 : 1;
-    let inverseB = b.dragging || b.broken || bIsVerticalSupport ? 0 : 1;
+    let inverseA = a.dragging || aIsVerticalSupport ? 0 : 1;
+    let inverseB = b.dragging || bIsVerticalSupport ? 0 : 1;
     let inverseTotal = inverseA + inverseB;
     if (!inverseTotal) {
         if (a.dragging && !b.dragging) inverseB = 1;
@@ -482,7 +474,7 @@ function tick(now) {
 
     if (!reducedMotion) {
         bodies.forEach((body) => {
-            if (body.dragging || body.broken) return;
+            if (body.dragging) return;
             body.vy += 0.38 * dt;
             body.x += body.vx * dt;
             body.y += body.vy * dt;
