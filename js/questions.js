@@ -310,7 +310,8 @@ function startDrag(event, body) {
 function moveDrag(event) {
     if (!activeBody) return;
     event.preventDefault();
-    if (!dragMoved && Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 6) {
+    const dragThreshold = activeBody.broken ? 2 : 6;
+    if (!dragMoved && Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > dragThreshold) {
         dragMoved = true;
         activeBody.rotationPaused = false;
         activeBody.element.classList.add('is-dragging');
@@ -359,7 +360,7 @@ function separateFromBrokenQuestion(a, b) {
 
     const broken = a.broken ? a : b;
     const intact = a.broken ? b : a;
-    if (intact.dragging) return;
+    if (intact.dragging || broken.dragging) return;
 
     const dx = (intact.x + intact.w / 2) - (broken.x + broken.w / 2);
     const dy = (intact.y + intact.h / 2) - (broken.y + broken.h / 2);

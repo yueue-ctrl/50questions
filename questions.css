@@ -197,6 +197,17 @@ body {
     border-color: var(--line);
     background: transparent;
     box-shadow: none;
+    pointer-events: auto;
+    touch-action: none;
+}
+
+.question-card.is-broken::after {
+    position: absolute;
+    inset: 0;
+    z-index: 9;
+    content: '';
+    background: transparent;
+    pointer-events: auto;
 }
 
 .question-card.is-broken::before,
@@ -206,6 +217,7 @@ body {
 
 .question-card.is-broken .question-text {
     visibility: visible;
+    pointer-events: none;
 }
 
 @keyframes fragment-fly {
