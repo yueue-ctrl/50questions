@@ -78,6 +78,7 @@ let dragMoved = false;
 let variedMode = false;
 let scrollGuardFrame = 0;
 let loaderTimer = 0;
+let ambientLoaderTimer = 0;
 
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
@@ -93,6 +94,15 @@ function showEggLoader() {
         eggLoader.classList.add('is-hidden');
         eggLoader.setAttribute('aria-hidden', 'true');
     }, reducedMotion ? 650 : 1200);
+}
+
+function scheduleAmbientLoader() {
+    window.clearTimeout(ambientLoaderTimer);
+    const delay = 60000 + Math.random() * 50000;
+    ambientLoaderTimer = window.setTimeout(() => {
+        if (!document.hidden && !activeBody) showEggLoader();
+        scheduleAmbientLoader();
+    }, delay);
 }
 
 function breakEgg(body) {
@@ -183,6 +193,7 @@ function applyEggAppearance() {
 
 variationToggle.addEventListener('click', () => {
     showEggLoader();
+    scheduleAmbientLoader();
     variedMode = !variedMode;
     applyEggAppearance();
     buildWall();
@@ -190,6 +201,7 @@ variationToggle.addEventListener('click', () => {
 
 resetStackButton.addEventListener('click', () => {
     showEggLoader();
+    scheduleAmbientLoader();
     buildWall();
     requestAnimationFrame(() => window.scrollTo(0, document.documentElement.scrollHeight));
 });
@@ -514,6 +526,7 @@ createBodies();
 applyEggAppearance();
 buildWall();
 showEggLoader();
+scheduleAmbientLoader();
 requestAnimationFrame(() => {
     requestAnimationFrame(() => window.scrollTo(0, document.documentElement.scrollHeight));
 });

@@ -39,21 +39,21 @@ body {
 
 .questions-reset {
     display: flex;
-    width: 112px;
-    height: 44px;
-    padding: 5px 9px;
+    width: 78px;
+    height: 32px;
+    padding: 4px 7px;
     align-items: center;
     justify-content: space-between;
-    border: 2px solid var(--line);
-    background: #000;
+    border: 1px solid var(--line);
+    background: transparent;
     cursor: pointer;
     pointer-events: auto;
 }
 
 .mini-egg {
-    width: 22px;
-    height: 29px;
-    border: 1.5px solid var(--line);
+    width: 15px;
+    height: 21px;
+    border: 1px solid var(--line);
     border-radius: 50% 50% 46% 46% / 61% 61% 39% 39%;
     background: #fff;
 }
@@ -108,11 +108,10 @@ body {
     inset: 0;
     z-index: 3000;
     display: grid;
-    padding: clamp(8px, 1.2vw, 18px);
     place-items: center;
-    background: #000;
-    border: clamp(5px, 0.65vw, 10px) solid var(--line);
+    background: transparent;
     opacity: 1;
+    pointer-events: none;
     visibility: visible;
     transition: opacity 180ms ease, visibility 0s linear 0s;
 }
@@ -126,16 +125,16 @@ body {
 
 .egg-loader__panel {
     display: flex;
-    width: min(82vw, 980px);
+    width: min(44vw, 240px);
     align-items: center;
     justify-content: space-between;
 }
 
 .egg-loader__egg {
     display: block;
-    width: clamp(92px, 17vw, 220px);
+    width: clamp(44px, 7vw, 64px);
     aspect-ratio: 0.78;
-    border: clamp(4px, 0.55vw, 8px) solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 50% 50% 46% 46% / 61% 61% 39% 39%;
     background: #fff;
     animation: loading-egg 900ms steps(1, end) infinite;
@@ -355,22 +354,22 @@ body {
     }
 
     .questions-reset {
-        width: 82px;
-        height: 36px;
-        padding: 4px 7px;
+        width: 68px;
+        height: 28px;
+        padding: 3px 6px;
     }
 
     .mini-egg {
-        width: 16px;
-        height: 22px;
+        width: 13px;
+        height: 18px;
     }
 
     .egg-loader__panel {
-        width: 88vw;
+        width: 180px;
     }
 
     .egg-loader__egg {
-        width: 25vw;
+        width: 48px;
     }
 
     .question-card {
