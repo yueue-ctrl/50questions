@@ -220,10 +220,6 @@ function createBodies() {
             angle: 0,
             angularVelocity: 0,
             rotationPaused: false,
-            sleeping: false,
-            sleepFrames: 0,
-            supported: false,
-            contacting: false,
             dragging: false,
             cracks: 0,
             broken: false,
@@ -271,13 +267,6 @@ function buildWall() {
         body.vy = 0;
         body.angle = startingAngles[(index * 7) % startingAngles.length];
         body.angularVelocity = 0;
-        body.sleeping = false;
-        body.sleepFrames = 0;
-        body.supported = false;
-        body.contacting = false;
-        body.restX = body.x;
-        body.restY = body.y;
-        body.restAngle = body.angle;
     });
     render();
 }
@@ -306,22 +295,8 @@ function moveDrag(event) {
     const dragThreshold = activeBody.broken ? 0 : 6;
     if (!dragMoved && Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > dragThreshold) {
         dragMoved = true;
-        activeBody.sleeping = false;
-        activeBody.sleepFrames = 0;
-        activeBody.restX = activeBody.x;
-        activeBody.restY = activeBody.y;
-        activeBody.restAngle = activeBody.angle;
         activeBody.rotationPaused = false;
         activeBody.element.classList.add('is-dragging');
-        bodies.forEach((candidate) => {
-            if (candidate === activeBody || candidate.broken || candidate.y > activeBody.y + activeBody.h) return;
-            candidate.sleeping = false;
-            candidate.sleepFrames = 0;
-            candidate.vy = Math.max(candidate.vy, 0.9);
-            candidate.restX = candidate.x;
-            candidate.restY = candidate.y;
-            candidate.restAngle = candidate.angle;
-        });
     }
     if (!dragMoved) return;
 
@@ -384,28 +359,12 @@ function resolvePair(a, b) {
     normalX /= normalLength;
     normalY /= normalLength;
 
-    a.contacting = true;
-    b.contacting = true;
-
-    if (normalY > 0.35) a.supported = true;
-    if (normalY < -0.35) b.supported = true;
-
-    const impactSpeed = Math.hypot(b.vx - a.vx, b.vy - a.vy);
-    if (b.sleeping && (a.dragging || impactSpeed > 0.8)) {
-        b.sleeping = false;
-        b.sleepFrames = 0;
-    }
-    if (a.sleeping && (b.dragging || impactSpeed > 0.8)) {
-        a.sleeping = false;
-        a.sleepFrames = 0;
-    }
-
     const aOnFloor = a.y + a.h >= stageHeight - 0.75;
     const bOnFloor = b.y + b.h >= stageHeight - 0.75;
     const aIsVerticalSupport = aOnFloor && normalY < -0.35;
     const bIsVerticalSupport = bOnFloor && normalY > 0.35;
-    let inverseA = a.dragging || a.broken || a.sleeping || aIsVerticalSupport ? 0 : 1;
-    let inverseB = b.dragging || b.broken || b.sleeping || bIsVerticalSupport ? 0 : 1;
+    let inverseA = a.dragging || a.broken || aIsVerticalSupport ? 0 : 1;
+    let inverseB = b.dragging || b.broken || bIsVerticalSupport ? 0 : 1;
     let inverseTotal = inverseA + inverseB;
     if (!inverseTotal) {
         if (a.dragging && !b.dragging) inverseB = 1;
@@ -491,9 +450,7 @@ function tick(now) {
 
     if (!reducedMotion) {
         bodies.forEach((body) => {
-            body.supported = body.y + body.h >= stageHeight - 1;
-            body.contacting = false;
-            if (body.dragging || body.broken || body.sleeping) return;
+            if (body.dragging || body.broken) return;
             body.vy += 0.38 * dt;
             body.x += body.vx * dt;
             body.y += body.vy * dt;
@@ -517,32 +474,6 @@ function tick(now) {
             }
         }
         bodies.forEach(keepInside);
-
-        bodies.forEach((body) => {
-            if (body.dragging || body.broken || body.sleeping) return;
-            if (body.supported) {
-                body.vx *= 0.84;
-                body.angularVelocity *= 0.65;
-            }
-
-            const drift = Math.hypot(body.x - body.restX, body.y - body.restY);
-            const rotationDrift = Math.abs(body.angle - body.restAngle);
-            if ((body.supported || body.contacting) && drift < 20 && rotationDrift < 4) {
-                body.sleepFrames += 1;
-            } else {
-                body.restX = body.x;
-                body.restY = body.y;
-                body.restAngle = body.angle;
-                body.sleepFrames = 0;
-            }
-
-            if (body.sleepFrames >= 12) {
-                body.sleeping = true;
-                body.vx = 0;
-                body.vy = 0;
-                body.angularVelocity = 0;
-            }
-        });
 
     }
 
