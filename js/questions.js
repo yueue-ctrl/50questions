@@ -55,14 +55,14 @@ const stage = document.getElementById('questions-stage');
 const variationToggle = document.getElementById('variation-toggle');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const EGG_PALETTE = [
-    { fill: '#ff8fc7', ink: '#651040' },
-    { fill: '#9fddff', ink: '#123e62' },
-    { fill: '#b9e7a5', ink: '#214f2a' },
-    { fill: '#cdb9ff', ink: '#39256e' },
-    { fill: '#ffad78', ink: '#6b250d' },
-    { fill: '#fff08c', ink: '#614600' },
-    { fill: '#8ee0d0', ink: '#134c45' },
-    { fill: '#f6b0a8', ink: '#6a211b' }
+    '#e6007e',
+    '#1769aa',
+    '#15803d',
+    '#6d28d9',
+    '#c2410c',
+    '#9a6700',
+    '#087f75',
+    '#be123c'
 ];
 const bodies = [];
 let stageWidth = 0;
@@ -145,26 +145,26 @@ function applyEggAppearance() {
         }
 
         const lengthRatio = clamp((question.length - 45) / 85, 0, 1);
-        const minimumWidth = compact ? 128 : 150;
-        const maximumWidth = compact ? 205 : 252;
+        const minimumWidth = compact ? 108 : 124;
+        const maximumWidth = compact ? 238 : 300;
         const width = Math.round(minimumWidth + (maximumWidth - minimumWidth) * lengthRatio);
         const height = Math.round(width * (compact ? 1.24 : 1.22));
-        const fontSize = (compact ? 0.88 : 1.02) + lengthRatio * (compact ? 0.22 : 0.24);
+        const fontSize = (compact ? 0.92 : 1.08) + lengthRatio * (compact ? 0.28 : 0.38);
         const color = EGG_PALETTE[(body.index * 5 + Math.floor(lengthRatio * 3)) % EGG_PALETTE.length];
 
         body.element.style.setProperty('--egg-width', `${width}px`);
         body.element.style.setProperty('--egg-height', `${height}px`);
         body.element.style.setProperty('--egg-font-size', `${fontSize.toFixed(2)}rem`);
-        body.element.style.setProperty('--egg-fill', color.fill);
-        body.element.style.setProperty('--egg-ink', color.ink);
+        body.element.style.setProperty('--egg-fill', '#fff');
+        body.element.style.setProperty('--egg-ink', color);
         updateBodySize(body);
     });
 
     variationToggle.setAttribute('aria-pressed', String(variedMode));
-    variationToggle.textContent = variedMode ? 'UNIFORM EGGS' : 'COLOR EGGS';
+    variationToggle.textContent = variedMode ? 'UNIFORM EGGS' : 'DIFFERENT EGGS';
     variationToggle.setAttribute(
         'aria-label',
-        variedMode ? 'Return to uniform white eggs' : 'Switch to varied colorful eggs'
+        variedMode ? 'Return to uniform white eggs' : 'Switch to eggs with different sizes and type colors'
     );
 }
 
