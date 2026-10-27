@@ -261,11 +261,9 @@ function buildWall() {
     refreshBounds();
 
     const startingAngles = [-4, 3, -2, 5, -3, 2, 4, -5, 3, -2];
-    const variedOffsets = [-0.18, 0.12, -0.06, 0.17, -0.13, 0.04, 0.14, -0.16, 0.08, -0.02];
     let nextY = topSpace;
     bodies.forEach((body, index) => {
-        const horizontalOffset = variedMode ? variedOffsets[index % variedOffsets.length] * body.w : 0;
-        body.x = clamp((stageWidth - body.w) / 2 + horizontalOffset, 0, stageWidth - body.w);
+        body.x = (stageWidth - body.w) / 2;
         body.y = nextY;
         nextY += body.h;
         body.vx = 0;
