@@ -124,12 +124,6 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
-.question-card.crack-1 .question-number,
-.question-card.crack-2 .question-number,
-.question-card.crack-3 .question-number {
-    visibility: hidden;
-}
-
 .question-text {
     visibility: hidden;
 }
