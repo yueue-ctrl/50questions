@@ -90,10 +90,10 @@ function handleOrientation(event) {
 function handleMotion(event) {
     const acceleration = event.acceleration;
     if (!acceleration) return;
-    const nextX = withDeadZone(acceleration.x || 0, 0.35);
-    const nextY = withDeadZone(acceleration.y || 0, 0.35);
-    shakeX = clamp(shakeX * 0.55 + nextX * 0.45, -10, 10);
-    shakeY = clamp(shakeY * 0.55 - nextY * 0.45, -10, 10);
+    const nextX = withDeadZone(acceleration.x || 0, 0.9);
+    const nextY = withDeadZone(acceleration.y || 0, 0.9);
+    shakeX = clamp(shakeX * 0.8 + nextX * 0.2, -5, 5);
+    shakeY = clamp(shakeY * 0.8 - nextY * 0.2, -5, 5);
 }
 
 function stopMotion() {
@@ -149,6 +149,9 @@ function breakEgg(body) {
     if (body.cracks < 3) return;
 
     body.broken = true;
+    body.vx = 0;
+    body.vy = 0;
+    body.angularVelocity = 0;
     body.element.querySelector('.egg-cracks')?.remove();
     body.element.classList.add('is-breaking');
     body.element.setAttribute('aria-label', `Question ${body.index + 1}: ${QUESTIONS[body.index]}`);
@@ -337,7 +340,10 @@ function endDrag() {
 }
 
 function resolvePair(a, b) {
-    if (a.dragging && b.dragging) return;
+    // A cracked-open egg becomes a stationary question outline. It no longer
+    // supports the intact eggs above it, so only deliberate breaking can make
+    // the tower settle or collapse.
+    if (a.broken || b.broken || (a.dragging && b.dragging)) return;
     const dx = (b.x + b.w / 2) - (a.x + a.w / 2);
     const dy = (b.y + b.h / 2) - (a.y + a.h / 2);
     const combinedRadiusX = (a.w + b.w) * 0.47;
@@ -427,8 +433,14 @@ function scheduleScrollGuard() {
 }
 
 function render() {
+    // Motion is a restrained visual response shared by the entire intact
+    // stack. Applying the same offset to every egg preserves its structure.
+    const motionX = motionEnabled ? tiltX * 6 + shakeX * 0.8 : 0;
+    const motionY = motionEnabled ? tiltY * 2 + shakeY * 0.35 : 0;
     bodies.forEach((body) => {
-        body.element.style.transform = `translate3d(${body.x.toFixed(2)}px, ${body.y.toFixed(2)}px, 0) rotate(${body.angle.toFixed(2)}deg)`;
+        const offsetX = body.broken ? 0 : motionX;
+        const offsetY = body.broken ? 0 : motionY;
+        body.element.style.transform = `translate3d(${(body.x + offsetX).toFixed(2)}px, ${(body.y + offsetY).toFixed(2)}px, 0) rotate(${body.angle.toFixed(2)}deg)`;
     });
 }
 
@@ -438,12 +450,7 @@ function tick(now) {
 
     if (!reducedMotion) {
         bodies.forEach((body) => {
-            if (body.dragging) return;
-            if (motionEnabled) {
-                const variation = 0.9 + (body.index % 5) * 0.025;
-                body.vx += (tiltX * 0.085 + shakeX * 0.055) * variation * dt;
-                body.vy += (tiltY * 0.025 + shakeY * 0.035) * variation * dt;
-            }
+            if (body.dragging || body.broken) return;
             body.vy += 0.38 * dt;
             body.x += body.vx * dt;
             body.y += body.vy * dt;
