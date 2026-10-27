@@ -310,7 +310,7 @@ function startDrag(event, body) {
 function moveDrag(event) {
     if (!activeBody) return;
     event.preventDefault();
-    const dragThreshold = activeBody.broken ? 2 : 6;
+    const dragThreshold = activeBody.broken ? 0 : 6;
     if (!dragMoved && Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > dragThreshold) {
         dragMoved = true;
         activeBody.rotationPaused = false;
@@ -321,13 +321,15 @@ function moveDrag(event) {
     const rect = stage.getBoundingClientRect();
     const now = performance.now();
     const elapsed = Math.max(8, now - previousPointer.time);
+    const throwStrength = activeBody.broken ? 2.6 : 11;
+    const spinStrength = activeBody.broken ? 0.2 : 0.75;
     activeBody.x = Math.max(0, Math.min(stageWidth - activeBody.w, event.clientX - rect.left - pointerOffset.x));
     activeBody.y = Math.max(0, Math.min(stageHeight - activeBody.h, event.clientY - rect.top - pointerOffset.y));
-    activeBody.vx = (event.clientX - previousPointer.x) / elapsed * 11;
-    activeBody.vy = (event.clientY - previousPointer.y) / elapsed * 11;
+    activeBody.vx = (event.clientX - previousPointer.x) / elapsed * throwStrength;
+    activeBody.vy = (event.clientY - previousPointer.y) / elapsed * throwStrength;
     activeBody.angularVelocity = (
         (event.clientX - previousPointer.x) + (event.clientY - previousPointer.y) * 0.35
-    ) / elapsed * 0.75;
+    ) / elapsed * spinStrength;
     previousPointer = { x: event.clientX, y: event.clientY, time: now };
 }
 
@@ -347,6 +349,12 @@ function endDrag() {
         return;
     }
 
+    if (releasedBody.broken) {
+        releasedBody.vx = 0;
+        releasedBody.vy = 0;
+        releasedBody.angularVelocity = 0;
+    }
+
     bodies.forEach((body) => {
         if (body === releasedBody || body.y >= releasedBody.y) return;
         const direction = body.index % 2 ? 1 : -1;
@@ -355,43 +363,9 @@ function endDrag() {
     });
 }
 
-function separateFromBrokenQuestion(a, b) {
-    if (a.broken === b.broken) return;
-
-    const broken = a.broken ? a : b;
-    const intact = a.broken ? b : a;
-    if (intact.dragging || broken.dragging) return;
-
-    const dx = (intact.x + intact.w / 2) - (broken.x + broken.w / 2);
-    const dy = (intact.y + intact.h / 2) - (broken.y + broken.h / 2);
-    const combinedRadiusX = (intact.w + broken.w) * 0.47;
-    const combinedRadiusY = (intact.h + broken.h) * 0.5;
-    const verticalRatio = Math.abs(dy) / combinedRadiusY;
-    if (verticalRatio >= 1) return;
-
-    // The question outline is not a vertical support, but it keeps a clear
-    // reading area. Falling eggs are guided sideways along its ellipse rather
-    // than passing through and covering the text.
-    const requiredHorizontalDistance = combinedRadiusX * Math.sqrt(1 - verticalRatio * verticalRatio) + 2;
-    const currentHorizontalDistance = Math.abs(dx);
-    if (currentHorizontalDistance >= requiredHorizontalDistance) return;
-
-    const direction = currentHorizontalDistance > 1
-        ? Math.sign(dx)
-        : (intact.index % 2 === 0 ? -1 : 1);
-    const correction = requiredHorizontalDistance - currentHorizontalDistance;
-    intact.x += direction * correction;
-    intact.vx += direction * Math.min(0.24, correction * 0.008);
-}
-
 function resolvePair(a, b) {
-    // A cracked-open egg becomes a stationary question outline. It no longer
-    // supports the intact eggs above it, but it still guides falling eggs away
-    // from the text so the two outlines never occupy the same position.
-    if (a.broken || b.broken) {
-        separateFromBrokenQuestion(a, b);
-        return;
-    }
+    // Opened questions are placeable rigid colliders. They stay where the
+    // visitor leaves them and push other eggs aside without drifting away.
     if (a.dragging && b.dragging) return;
     const dx = (b.x + b.w / 2) - (a.x + a.w / 2);
     const dy = (b.y + b.h / 2) - (a.y + a.h / 2);
@@ -412,9 +386,15 @@ function resolvePair(a, b) {
     const bOnFloor = b.y + b.h >= stageHeight - 0.75;
     const aIsVerticalSupport = aOnFloor && normalY < -0.35;
     const bIsVerticalSupport = bOnFloor && normalY > 0.35;
-    const inverseA = a.dragging || aIsVerticalSupport ? 0 : 1;
-    const inverseB = b.dragging || bIsVerticalSupport ? 0 : 1;
-    const inverseTotal = inverseA + inverseB || 1;
+    let inverseA = a.dragging || a.broken || aIsVerticalSupport ? 0 : 1;
+    let inverseB = b.dragging || b.broken || bIsVerticalSupport ? 0 : 1;
+    let inverseTotal = inverseA + inverseB;
+    if (!inverseTotal) {
+        if (a.dragging && !b.dragging) inverseB = 1;
+        else if (b.dragging && !a.dragging) inverseA = 1;
+        else return;
+        inverseTotal = inverseA + inverseB;
+    }
     const penetration = (1 - scaledDistance) * Math.min(combinedRadiusX, combinedRadiusY);
 
     if (!a.dragging) {

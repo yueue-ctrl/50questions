@@ -228,7 +228,7 @@ body {
 
 .question-card.is-dragging {
     z-index: 900;
-    scale: 1.045;
+    scale: 1;
     box-shadow: none;
     cursor: grabbing;
 }
