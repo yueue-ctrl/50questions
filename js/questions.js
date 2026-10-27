@@ -354,11 +354,44 @@ function endDrag() {
     });
 }
 
+function separateFromBrokenQuestion(a, b) {
+    if (a.broken === b.broken) return;
+
+    const broken = a.broken ? a : b;
+    const intact = a.broken ? b : a;
+    if (intact.dragging) return;
+
+    const dx = (intact.x + intact.w / 2) - (broken.x + broken.w / 2);
+    const dy = (intact.y + intact.h / 2) - (broken.y + broken.h / 2);
+    const combinedRadiusX = (intact.w + broken.w) * 0.47;
+    const combinedRadiusY = (intact.h + broken.h) * 0.5;
+    const verticalRatio = Math.abs(dy) / combinedRadiusY;
+    if (verticalRatio >= 1) return;
+
+    // The question outline is not a vertical support, but it keeps a clear
+    // reading area. Falling eggs are guided sideways along its ellipse rather
+    // than passing through and covering the text.
+    const requiredHorizontalDistance = combinedRadiusX * Math.sqrt(1 - verticalRatio * verticalRatio) + 2;
+    const currentHorizontalDistance = Math.abs(dx);
+    if (currentHorizontalDistance >= requiredHorizontalDistance) return;
+
+    const direction = currentHorizontalDistance > 1
+        ? Math.sign(dx)
+        : (intact.index % 2 === 0 ? -1 : 1);
+    const correction = requiredHorizontalDistance - currentHorizontalDistance;
+    intact.x += direction * correction;
+    intact.vx += direction * Math.min(0.24, correction * 0.008);
+}
+
 function resolvePair(a, b) {
     // A cracked-open egg becomes a stationary question outline. It no longer
-    // supports the intact eggs above it, so only deliberate breaking can make
-    // the tower settle or collapse.
-    if (a.broken || b.broken || (a.dragging && b.dragging)) return;
+    // supports the intact eggs above it, but it still guides falling eggs away
+    // from the text so the two outlines never occupy the same position.
+    if (a.broken || b.broken) {
+        separateFromBrokenQuestion(a, b);
+        return;
+    }
+    if (a.dragging && b.dragging) return;
     const dx = (b.x + b.w / 2) - (a.x + a.w / 2);
     const dy = (b.y + b.h / 2) - (a.y + a.h / 2);
     const combinedRadiusX = (a.w + b.w) * 0.47;
