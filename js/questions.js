@@ -286,22 +286,32 @@ function buildWall() {
 
 function startDrag(event, body) {
     const rect = stage.getBoundingClientRect();
+    const motionOffset = getMotionOffset(body);
     activeBody = body;
+
+    // Freeze the egg on pointer-down instead of waiting for the drag
+    // threshold. Baking the current sensor offset into its physical position
+    // keeps the egg exactly under the finger when it leaves the moving stack.
+    body.x += motionOffset.x;
+    body.y += motionOffset.y;
+    body.dragging = true;
+    body.vx = 0;
+    body.vy = 0;
+    body.angularVelocity = 0;
     pointerOffset.x = event.clientX - rect.left - body.x;
     pointerOffset.y = event.clientY - rect.top - body.y;
     pointerStart = { x: event.clientX, y: event.clientY };
     dragMoved = false;
     previousPointer = { x: event.clientX, y: event.clientY, time: performance.now() };
     body.element.setPointerCapture(event.pointerId);
+    event.preventDefault();
 }
 
 function moveDrag(event) {
     if (!activeBody) return;
+    event.preventDefault();
     if (!dragMoved && Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 6) {
         dragMoved = true;
-        activeBody.dragging = true;
-        activeBody.vx = 0;
-        activeBody.vy = 0;
         activeBody.rotationPaused = false;
         activeBody.element.classList.add('is-dragging');
     }
@@ -323,6 +333,11 @@ function moveDrag(event) {
 function endDrag() {
     if (!activeBody) return;
     const releasedBody = activeBody;
+    if (!releasedBody.broken) {
+        const motionOffset = getStackMotionOffset();
+        releasedBody.x -= motionOffset.x;
+        releasedBody.y -= motionOffset.y;
+    }
     activeBody.dragging = false;
     activeBody.element.classList.remove('is-dragging');
     activeBody = null;
@@ -432,15 +447,24 @@ function scheduleScrollGuard() {
     scrollGuardFrame = requestAnimationFrame(keepEggsInScrollableView);
 }
 
+function getStackMotionOffset() {
+    return {
+        x: motionEnabled ? tiltX * 6 + shakeX * 0.8 : 0,
+        y: motionEnabled ? tiltY * 2 + shakeY * 0.35 : 0
+    };
+}
+
+function getMotionOffset(body) {
+    if (body.broken || body.dragging) return { x: 0, y: 0 };
+    return getStackMotionOffset();
+}
+
 function render() {
     // Motion is a restrained visual response shared by the entire intact
     // stack. Applying the same offset to every egg preserves its structure.
-    const motionX = motionEnabled ? tiltX * 6 + shakeX * 0.8 : 0;
-    const motionY = motionEnabled ? tiltY * 2 + shakeY * 0.35 : 0;
     bodies.forEach((body) => {
-        const offsetX = body.broken ? 0 : motionX;
-        const offsetY = body.broken ? 0 : motionY;
-        body.element.style.transform = `translate3d(${(body.x + offsetX).toFixed(2)}px, ${(body.y + offsetY).toFixed(2)}px, 0) rotate(${body.angle.toFixed(2)}deg)`;
+        const motionOffset = getMotionOffset(body);
+        body.element.style.transform = `translate3d(${(body.x + motionOffset.x).toFixed(2)}px, ${(body.y + motionOffset.y).toFixed(2)}px, 0) rotate(${body.angle.toFixed(2)}deg)`;
     });
 }
 
