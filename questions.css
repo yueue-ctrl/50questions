@@ -109,7 +109,7 @@ body {
     z-index: 3000;
     display: grid;
     place-items: center;
-    background: transparent;
+    background: var(--paper);
     opacity: 1;
     pointer-events: none;
     visibility: visible;

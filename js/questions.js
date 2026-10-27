@@ -93,7 +93,7 @@ function showEggLoader() {
     loaderTimer = window.setTimeout(() => {
         eggLoader.classList.add('is-hidden');
         eggLoader.setAttribute('aria-hidden', 'true');
-    }, reducedMotion ? 650 : 1200);
+    }, reducedMotion ? 900 : 1800);
 }
 
 function scheduleAmbientLoader() {
