@@ -52,8 +52,18 @@ const QUESTIONS = [
 ];
 
 const stage = document.getElementById('questions-stage');
-const motionToggle = document.getElementById('motion-toggle');
+const variationToggle = document.getElementById('variation-toggle');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EGG_PALETTE = [
+    { fill: '#ff8fc7', ink: '#651040' },
+    { fill: '#9fddff', ink: '#123e62' },
+    { fill: '#b9e7a5', ink: '#214f2a' },
+    { fill: '#cdb9ff', ink: '#39256e' },
+    { fill: '#ffad78', ink: '#6b250d' },
+    { fill: '#fff08c', ink: '#614600' },
+    { fill: '#8ee0d0', ink: '#134c45' },
+    { fill: '#f6b0a8', ink: '#6a211b' }
+];
 const bodies = [];
 let stageWidth = 0;
 let stageHeight = 0;
@@ -63,11 +73,7 @@ let pointerOffset = { x: 0, y: 0 };
 let previousPointer = { x: 0, y: 0, time: 0 };
 let pointerStart = { x: 0, y: 0 };
 let dragMoved = false;
-let motionEnabled = false;
-let tiltX = 0;
-let tiltY = 0;
-let shakeX = 0;
-let shakeY = 0;
+let variedMode = false;
 let scrollGuardFrame = 0;
 
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -75,69 +81,6 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
-
-function withDeadZone(value, threshold) {
-    return Math.abs(value) < threshold ? 0 : value;
-}
-
-function handleOrientation(event) {
-    const gamma = Number.isFinite(event.gamma) ? event.gamma : 0;
-    const beta = Number.isFinite(event.beta) ? event.beta : 0;
-    tiltX = withDeadZone(clamp(gamma, -35, 35), 2) / 35;
-    tiltY = withDeadZone(clamp(beta, -35, 35), 3) / 35;
-}
-
-function handleMotion(event) {
-    const acceleration = event.acceleration;
-    if (!acceleration) return;
-    const nextX = withDeadZone(acceleration.x || 0, 0.9);
-    const nextY = withDeadZone(acceleration.y || 0, 0.9);
-    shakeX = clamp(shakeX * 0.8 + nextX * 0.2, -5, 5);
-    shakeY = clamp(shakeY * 0.8 - nextY * 0.2, -5, 5);
-}
-
-function stopMotion() {
-    window.removeEventListener('deviceorientation', handleOrientation);
-    window.removeEventListener('devicemotion', handleMotion);
-    motionEnabled = false;
-    tiltX = 0;
-    tiltY = 0;
-    shakeX = 0;
-    shakeY = 0;
-    motionToggle.setAttribute('aria-pressed', 'false');
-    motionToggle.textContent = 'MOTION';
-}
-
-async function startMotion() {
-    const permissionRequests = [];
-    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-        permissionRequests.push(DeviceMotionEvent.requestPermission());
-    }
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        permissionRequests.push(DeviceOrientationEvent.requestPermission());
-    }
-
-    const permissions = await Promise.all(permissionRequests);
-    if (permissions.some((permission) => permission !== 'granted')) throw new Error('Motion permission denied');
-
-    window.addEventListener('deviceorientation', handleOrientation);
-    window.addEventListener('devicemotion', handleMotion);
-    motionEnabled = true;
-    motionToggle.setAttribute('aria-pressed', 'true');
-    motionToggle.textContent = 'MOTION ON';
-}
-
-motionToggle.addEventListener('click', async () => {
-    if (motionEnabled) {
-        stopMotion();
-        return;
-    }
-    try {
-        await startMotion();
-    } catch (error) {
-        motionToggle.textContent = 'ALLOW MOTION';
-    }
-});
 
 function breakEgg(body) {
     if (body.broken) return;
@@ -187,6 +130,49 @@ function updateBodySize(body) {
     body.w = body.element.offsetWidth;
     body.h = body.element.offsetHeight;
 }
+
+function applyEggAppearance() {
+    const compact = window.innerWidth <= 700;
+    stage.classList.toggle('is-varied', variedMode);
+
+    bodies.forEach((body) => {
+        const question = QUESTIONS[body.index];
+        if (!variedMode) {
+            ['--egg-width', '--egg-height', '--egg-font-size', '--egg-fill', '--egg-ink']
+                .forEach((property) => body.element.style.removeProperty(property));
+            updateBodySize(body);
+            return;
+        }
+
+        const lengthRatio = clamp((question.length - 45) / 85, 0, 1);
+        const minimumWidth = compact ? 128 : 150;
+        const maximumWidth = compact ? 205 : 252;
+        const width = Math.round(minimumWidth + (maximumWidth - minimumWidth) * lengthRatio);
+        const height = Math.round(width * (compact ? 1.24 : 1.22));
+        const fontSize = (compact ? 0.88 : 1.02) + lengthRatio * (compact ? 0.22 : 0.24);
+        const color = EGG_PALETTE[(body.index * 5 + Math.floor(lengthRatio * 3)) % EGG_PALETTE.length];
+
+        body.element.style.setProperty('--egg-width', `${width}px`);
+        body.element.style.setProperty('--egg-height', `${height}px`);
+        body.element.style.setProperty('--egg-font-size', `${fontSize.toFixed(2)}rem`);
+        body.element.style.setProperty('--egg-fill', color.fill);
+        body.element.style.setProperty('--egg-ink', color.ink);
+        updateBodySize(body);
+    });
+
+    variationToggle.setAttribute('aria-pressed', String(variedMode));
+    variationToggle.textContent = variedMode ? 'UNIFORM EGGS' : 'COLOR EGGS';
+    variationToggle.setAttribute(
+        'aria-label',
+        variedMode ? 'Return to uniform white eggs' : 'Switch to varied colorful eggs'
+    );
+}
+
+variationToggle.addEventListener('click', () => {
+    variedMode = !variedMode;
+    applyEggAppearance();
+    buildWall();
+});
 
 function createBodies() {
     QUESTIONS.forEach((question, index) => {
@@ -261,21 +247,24 @@ function buildWall() {
     refreshBounds();
     bodies.forEach(updateBodySize);
 
-    const eggHeight = Math.max(...bodies.map((body) => body.h));
-    const stackSpacing = eggHeight;
     const topSpace = 0;
     const bottomSpace = 0;
+    const stackHeight = bodies.reduce((total, body) => total + body.h, 0);
     const longCanvasHeight = Math.max(
         window.innerHeight * 1.8,
-        topSpace + stackSpacing * (bodies.length - 1) + eggHeight + bottomSpace
+        topSpace + stackHeight + bottomSpace
     );
     stage.style.height = `${longCanvasHeight}px`;
     refreshBounds();
 
     const startingAngles = [-4, 3, -2, 5, -3, 2, 4, -5, 3, -2];
+    const variedOffsets = [-0.18, 0.12, -0.06, 0.17, -0.13, 0.04, 0.14, -0.16, 0.08, -0.02];
+    let nextY = topSpace;
     bodies.forEach((body, index) => {
-        body.x = (stageWidth - body.w) / 2;
-        body.y = topSpace + index * stackSpacing;
+        const horizontalOffset = variedMode ? variedOffsets[index % variedOffsets.length] * body.w : 0;
+        body.x = clamp((stageWidth - body.w) / 2 + horizontalOffset, 0, stageWidth - body.w);
+        body.y = nextY;
+        nextY += body.h;
         body.vx = 0;
         body.vy = 0;
         body.angle = startingAngles[(index * 7) % startingAngles.length];
@@ -286,14 +275,9 @@ function buildWall() {
 
 function startDrag(event, body) {
     const rect = stage.getBoundingClientRect();
-    const motionOffset = getMotionOffset(body);
     activeBody = body;
 
-    // Freeze the egg on pointer-down instead of waiting for the drag
-    // threshold. Baking the current sensor offset into its physical position
-    // keeps the egg exactly under the finger when it leaves the moving stack.
-    body.x += motionOffset.x;
-    body.y += motionOffset.y;
+    // Freeze the egg on pointer-down instead of waiting for the drag threshold.
     body.dragging = true;
     body.vx = 0;
     body.vy = 0;
@@ -336,11 +320,6 @@ function moveDrag(event) {
 function endDrag() {
     if (!activeBody) return;
     const releasedBody = activeBody;
-    if (!releasedBody.broken) {
-        const motionOffset = getStackMotionOffset();
-        releasedBody.x -= motionOffset.x;
-        releasedBody.y -= motionOffset.y;
-    }
     activeBody.dragging = false;
     activeBody.element.classList.remove('is-dragging');
     activeBody = null;
@@ -461,24 +440,9 @@ function scheduleScrollGuard() {
     scrollGuardFrame = requestAnimationFrame(keepEggsInScrollableView);
 }
 
-function getStackMotionOffset() {
-    return {
-        x: motionEnabled ? tiltX * 6 + shakeX * 0.8 : 0,
-        y: motionEnabled ? tiltY * 2 + shakeY * 0.35 : 0
-    };
-}
-
-function getMotionOffset(body) {
-    if (body.broken || body.dragging) return { x: 0, y: 0 };
-    return getStackMotionOffset();
-}
-
 function render() {
-    // Motion is a restrained visual response shared by the entire intact
-    // stack. Applying the same offset to every egg preserves its structure.
     bodies.forEach((body) => {
-        const motionOffset = getMotionOffset(body);
-        body.element.style.transform = `translate3d(${(body.x + motionOffset.x).toFixed(2)}px, ${(body.y + motionOffset.y).toFixed(2)}px, 0) rotate(${body.angle.toFixed(2)}deg)`;
+        body.element.style.transform = `translate3d(${body.x.toFixed(2)}px, ${body.y.toFixed(2)}px, 0) rotate(${body.angle.toFixed(2)}deg)`;
     });
 }
 
@@ -513,8 +477,6 @@ function tick(now) {
         }
         bodies.forEach(keepInside);
 
-        shakeX *= 0.84;
-        shakeY *= 0.84;
     }
 
     render();
@@ -526,10 +488,12 @@ window.addEventListener('pointerup', endDrag);
 window.addEventListener('pointercancel', endDrag);
 window.addEventListener('scroll', scheduleScrollGuard, { passive: true });
 window.addEventListener('resize', () => {
+    applyEggAppearance();
     buildWall();
 });
 refreshBounds();
 createBodies();
+applyEggAppearance();
 buildWall();
 requestAnimationFrame(() => {
     requestAnimationFrame(() => window.scrollTo(0, document.documentElement.scrollHeight));

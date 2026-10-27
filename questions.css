@@ -82,18 +82,19 @@ body {
     top: 0;
     left: 0;
     display: flex;
-    width: 164px;
-    height: 205px;
+    width: var(--egg-width, 164px);
+    height: var(--egg-height, 205px);
     padding: 38px 20px 30px;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    border: 1px solid var(--line);
+    border: 1px solid currentColor;
     border-radius: 50% 50% 46% 46% / 61% 61% 39% 39%;
-    background: #fff;
+    color: var(--egg-ink, var(--ink));
+    background: var(--egg-fill, #fff);
     box-shadow: none;
-    font-size: 0.9rem;
+    font-size: var(--egg-font-size, 0.9rem);
     line-height: 1.16;
     letter-spacing: 0.012em;
     text-align: center;
@@ -142,6 +143,15 @@ body {
     line-height: 1.12;
 }
 
+.questions-stage.is-varied .question-card.has-medium-question .question-text {
+    font-size: 0.96em;
+}
+
+.questions-stage.is-varied .question-card.has-long-question .question-text {
+    font-size: 0.9em;
+    line-height: 1.14;
+}
+
 .egg-cracks {
     position: absolute;
     inset: 0;
@@ -150,7 +160,7 @@ body {
     height: 100%;
     overflow: visible;
     fill: none;
-    stroke: var(--line);
+    stroke: currentColor;
     stroke-linecap: round;
     stroke-linejoin: miter;
     stroke-width: 0.62;
@@ -179,8 +189,8 @@ body {
     z-index: 8;
     width: 17px;
     height: 22px;
-    border: 1px solid var(--line);
-    background: #fff;
+    border: 1px solid currentColor;
+    background: var(--egg-fill, #fff);
     clip-path: polygon(8% 4%, 100% 20%, 70% 100%, 0 73%);
     visibility: visible;
     pointer-events: none;
@@ -194,7 +204,7 @@ body {
 .question-card.is-broken {
     z-index: 700;
     overflow: visible;
-    border-color: var(--line);
+    border-color: currentColor;
     background: transparent;
     box-shadow: none;
     pointer-events: auto;
@@ -234,16 +244,16 @@ body {
 }
 
 .question-card:focus-visible {
-    outline: 2px solid var(--ink);
+    outline: 2px solid currentColor;
     outline-offset: 2px;
 }
 
 @media (min-width: 1500px) {
     .question-card {
-        width: 178px;
-        height: 220px;
+        width: var(--egg-width, 178px);
+        height: var(--egg-height, 220px);
         padding-inline: 22px;
-        font-size: 0.96rem;
+        font-size: var(--egg-font-size, 0.96rem);
     }
 }
 
@@ -261,10 +271,10 @@ body {
     }
 
     .question-card {
-        width: 140px;
-        height: 178px;
+        width: var(--egg-width, 140px);
+        height: var(--egg-height, 178px);
         padding: 30px 15px 25px;
-        font-size: 0.78rem;
+        font-size: var(--egg-font-size, 0.78rem);
     }
 }
 
